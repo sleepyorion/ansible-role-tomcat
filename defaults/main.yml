@@ -1,0 +1,12 @@
+tomcat_user: tomcat
+tomcat_group: tomcat
+tomcat_install_dir: /opt
+tomcat_home_dir: /var/lib/tomcat
+tomcat_log_dir: /var/log/tomcat
+tomcat_install_mode: tarball
+tomcat_url_prefix: https://repository.apache.org/content/repositories/releases/org/apache
+tomcat_version_major: "9"
+tomcat_version_minor: "0"
+tomcat_version_patch: "6"
+tomcat_version: "{{ tomcat_version_major }}.{{ tomcat_version_minor }}.{{ tomcat_version_patch }}"
+tomcat_url: "{{ tomcat_url_prefix }}/tomcat/tomcat/{{ tomcat_version }}/tomcat-{{ tomcat_version }}.tar.gz"

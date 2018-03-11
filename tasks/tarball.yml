@@ -1,0 +1,77 @@
+
+- name: "Create Tomcat group"
+  group:
+    name: "{{ tomcat_group }}"
+  become: yes
+
+- name: "Create Tomcat user"
+  user:
+    name: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    home: "{{ tomcat_home_dir }}"
+    comment: "Tomcat service account"
+    createhome: no
+    state: present
+    system: yes
+  become: yes
+
+- name: Set tomcat version install dir
+  set_fact:
+    tomcat_version_install_dir: "{{ tomcat_install_dir }}/tomcat/{{ tomcat_version }}"
+
+- stat: path="{{ tomcat_version_install_dir }}/bin/bootstrap.jar"
+  register: tomcat_bin
+  become: yes
+
+- name: check to see if tarball already existed
+  stat: path="/tmp/tomcat-{{ tomcat_version }}.tar.gz"
+  register: tarball_check
+  when: tomcat_bin.stat.exists == False
+  become: yes
+
+- name: "Get tarball - {{ tomcat_url }}"
+  get_url:
+    url: "{{ tomcat_url }}"
+    dest: "/tmp/tomcat-{{ tomcat_version }}.tar.gz"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+  when: (tomcat_bin.stat.exists == False and tarball_check.stat.exists == False)
+  become: yes
+  register: tomcat_download
+
+- name: check to see if tarball successfully downloaded
+  stat: path=/tmp/tomcat-{{ tomcat_version }}.tar.gz
+  register: tarball_download_check
+
+- name: check to see if install dest doesn't exist
+  stat: path="{{ tomcat_version_install_dir }}"
+  register: tomcat_install_dir_check
+  when: tomcat_bin.stat.exists == False
+
+- name: Create install dir
+  file:
+    path: "{{ tomcat_version_install_dir }}"
+    state: directory
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: 0775
+    recurse: yes
+  when: (tomcat_bin.stat.exists == False and tomcat_install_dir_check.stat.exists == False)
+  become: yes
+
+- name: extract tomcat {{ tomcat_version }} from archive
+  shell: |
+    tar zxf "/tmp/tomcat-{{ tomcat_version }}.tar.gz" --strip-components 1 -C "{{ tomcat_version_install_dir }}"
+  when: (tomcat_bin.stat.exists == False and tarball_download_check.stat.exists == True) 
+  register: tomcat_extract
+  become: yes
+
+- name: Change file permission for {{ tomcat_version_install_dir }}
+  file:
+    path: "{{ tomcat_version_install_dir }}"
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: 0775
+    recurse: yes
+  when: tomcat_extract|changed
+  become: yes

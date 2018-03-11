@@ -1,0 +1,29 @@
+- include: "tarball.yml"
+  when: tomcat_install_mode == "tarball"
+
+- name: Create required dir
+  file:
+    path: "{{ dir }}"
+    state: directory
+    owner: "{{ tomcat_user }}"
+    group: "{{ tomcat_group }}"
+    mode: 0775
+    recurse: yes
+  with_items:
+    - /var/lib/tomcat
+    - /var/log/tomcat
+  loop_control:
+    loop_var: dir
+  become: yes
+
+- name: create /etc/init.d/tomcat service
+  template: src=tomcat_initd.j2 dest=/etc/init.d/tomcat
+            owner=root group=root mode=0755
+  become: yes
+
+- name: start tomcat service 
+  service:
+    name: tomcat
+    enabled: yes
+    state: started
+  become: yes
