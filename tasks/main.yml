@@ -19,11 +19,13 @@
 - name: create /etc/init.d/tomcat service
   template: src=tomcat_initd.j2 dest=/etc/init.d/tomcat
             owner=root group=root mode=0755
+  register: tomcat_service
   become: yes
 
 - name: start tomcat service 
   service:
     name: tomcat
     enabled: yes
-    state: started
+    state: restarted
+  when: tomcat_service.changed
   become: yes
